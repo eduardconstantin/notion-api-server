@@ -1,5 +1,4 @@
 import { Client } from '@notionhq/client';
-import { PageObjectResponse, PartialPageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -14,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		filter: tableFilter,
 	});
 
-	const results: (PageObjectResponse | PartialPageObjectResponse)[] = database.results;
+	const { results } = database;
 
 	while (database.has_more) {
 		database = await notion.databases.query({
