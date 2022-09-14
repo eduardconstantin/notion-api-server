@@ -1,14 +1,30 @@
 import { Client } from '@notionhq/client';
+import { PageObjectResponse, PartialPageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+	const tableFilter: any = req.body || undefined;
+	const databaseID: string = process.env.NOTION_DB!;
 	const notion = new Client({
 		auth: req.query.NOTION_TOKEN as string,
 	});
 
-	const database = await notion.databases.query({
-		database_id: process.env.NOTION_DB!,
-		filter: req.body || undefined,
+	let database = await notion.databases.query({
+		database_id: databaseID,
+		filter: tableFilter,
 	});
-	return res.status(200).json(database.results);
+
+	const results: (PageObjectResponse | PartialPageObjectResponse)[] = database.results;
+
+	while (database.has_more) {
+		database = await notion.databases.query({
+			database_id: databaseID,
+			filter: tableFilter,
+			start_cursor: database.next_cursor!,
+		});
+
+		results.push(...database.results);
+	}
+
+	return res.status(200).json(results);
 }
